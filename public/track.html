@@ -76,7 +76,6 @@
             margin: 0 auto;
         }
 
-        /* Status card */
         .status-card {
             background: #fff;
             border: 1.5px solid #EDE8E0;
@@ -136,7 +135,6 @@
             word-break: break-all;
         }
 
-        /* Map button */
         .map-btn {
             display: flex;
             align-items: center;
@@ -159,7 +157,6 @@
             transform: scale(0.98);
         }
 
-        /* Update timer */
         .update-info {
             text-align: center;
             color: #6B6880;
@@ -172,7 +169,6 @@
             font-weight: 700;
         }
 
-        /* Alert banner */
         .alert {
             background: #FFF0EB;
             border: 1.5px solid rgba(230, 74, 25, 0.25);
@@ -200,7 +196,6 @@
             margin-top: 2px;
         }
 
-        /* Not found */
         .not-found {
             text-align: center;
             padding: 60px 20px;
@@ -218,7 +213,6 @@
             margin-bottom: 8px;
         }
 
-        /* History */
         .history-title {
             font-size: 13px;
             font-weight: 700;
@@ -273,7 +267,6 @@
     </header>
 
     <div class="container">
-
         <div id="content">
             <div class="not-found">
                 <div class="icon">📍</div>
@@ -281,14 +274,12 @@
                 <p>Fetching latest GPS data</p>
             </div>
         </div>
-
     </div>
 
     <script>
         // Get session ID from URL: /track/SOS_123456789
         const sessionId = window.location.pathname.split('/track/')[1];
         let updateCount = 0;
-        let locationHistory = [];
 
         async function fetchLocation() {
             if (!sessionId) {
@@ -322,18 +313,24 @@
                     return;
                 }
 
-                // Add to history
-                if (locationHistory.length === 0 ||
-                    locationHistory[0].timestamp !== data.timestamp) {
-                    locationHistory.unshift(data);
-                    if (locationHistory.length > 10) locationHistory.pop();
-                    updateCount++;
-                }
-
+                updateCount++;
                 renderLocation({ ...data, isInitial: false });
+
+                // History comes from the server now — no client accumulation
+                fetchHistory();
 
             } catch (e) {
                 console.error('Fetch error:', e);
+            }
+        }
+
+        async function fetchHistory() {
+            try {
+                const res = await fetch(`/api/location/${sessionId}/history`);
+                const history = await res.json();
+                renderHistory(history);
+            } catch (e) {
+                console.error('History fetch error:', e);
             }
         }
 
@@ -345,7 +342,6 @@
 
             document.getElementById('content').innerHTML = `
 
-      <!-- SOS Alert banner -->
       <div class="alert">
         <div class="alert-icon">🚨</div>
         <div class="alert-text">
@@ -354,7 +350,6 @@
         </div>
       </div>
 
-      <!-- Last known location -->
       <div class="status-card">
         <div class="label">${isLive ? '📍 Live Location' : '📍 Last Known Location'}</div>
         <div class="big">${data.latitude?.toFixed(6)}, ${data.longitude?.toFixed(6)}</div>
@@ -366,12 +361,10 @@
         </div>
       </div>
 
-      <!-- Open in Maps -->
       <a class="map-btn" href="${mapsLink}" target="_blank">
         📍 Open Live Location in Google Maps
       </a>
 
-      <!-- Device info -->
       <div class="grid">
         <div class="info-box">
           <div class="key">Device</div>
@@ -383,16 +376,23 @@
         </div>
       </div>
 
-      <!-- Update timer -->
       <div class="update-info">
         Auto-refreshes every <span>60 seconds</span> &nbsp;•&nbsp;
-        Location updates every <span>1 minute</span>
+        Location updates every <span>10 seconds</span>
       </div>
 
-      <!-- Location history -->
-      ${locationHistory.length > 1 ? `
+      <div id="historySection"></div>
+    `;
+        }
+
+        function renderHistory(history) {
+            const section = document.getElementById('historySection');
+            if (!section) return;
+            if (!history || history.length < 2) { section.innerHTML = ''; return; }
+
+            section.innerHTML = `
         <div class="history-title">📋 Location History</div>
-        ${locationHistory.map((l, i) => `
+        ${history.map((l, i) => `
           <div class="history-item">
             <div>
               <div class="coords">${l.latitude?.toFixed(5)}, ${l.longitude?.toFixed(5)}</div>
@@ -403,8 +403,7 @@
             <a href="${l.maps_link}" target="_blank">View →</a>
           </div>
         `).join('')}
-      ` : ''}
-    `;
+      `;
         }
 
         function showError(msg) {
@@ -416,9 +415,9 @@
       </div>`;
         }
 
-        // Fetch immediately then every 60 seconds
+        // Fetch immediately, then every 10s (matches app's live tracking interval)
         fetchLocation();
-        setInterval(fetchLocation, 60 * 1000);
+        setInterval(fetchLocation, 10 * 1000);
     </script>
 
 </body>

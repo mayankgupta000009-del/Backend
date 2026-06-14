@@ -341,12 +341,31 @@
             margin-bottom: 8px;
         }
 
+        /* Admin key prompt */
+        .key-banner {
+            background: #FFF3E0;
+            border: 1.5px solid rgba(186, 117, 23, 0.3);
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin: 16px 32px 0;
+            font-size: 12px;
+            color: #BA7517;
+            display: none;
+        }
+
+        .key-banner.show {
+            display: block;
+        }
+
         @media(max-width:600px) {
 
             header,
             .stats,
             .controls,
-            .events {
+            .events,
+            .key-banner {
+                margin-left: 0;
+                margin-right: 0;
                 padding-left: 16px;
                 padding-right: 16px;
             }
@@ -383,12 +402,44 @@
     <div class="controls">
         <button class="btn-refresh" onclick="loadEvents()">🔄 Refresh</button>
         <button class="btn-clear" onclick="clearAll()">🗑️ Clear All</button>
+        <button class="btn-clear" onclick="setAdminKey()">🔑 Set Admin Key</button>
         <span class="auto-lbl">Auto-refresh every 10 seconds</span>
+    </div>
+
+    <div class="key-banner" id="keyBanner">
+        ⚠️ No admin key set — delete/clear actions will fail with 401.
+        Click "Set Admin Key" and enter the server's API_KEY to enable them.
     </div>
 
     <div class="events" id="eventList"></div>
 
     <script>
+        // ── Admin key (for delete/clear) ──────────────────────────
+        // Stored only in this browser's localStorage, never sent on
+        // GET requests. Required because /api/sos DELETE is protected
+        // by the same x-api-key middleware as the mobile app's writes.
+        function getAdminKey() {
+            return localStorage.getItem('kavach_admin_key') || '';
+        }
+
+        function setAdminKey() {
+            const current = getAdminKey();
+            const key = prompt(
+                'Enter server API_KEY (used only for delete/clear actions):',
+                current
+            );
+            if (key !== null) {
+                localStorage.setItem('kavach_admin_key', key.trim());
+                updateKeyBanner();
+            }
+        }
+
+        function updateKeyBanner() {
+            document.getElementById('keyBanner').classList.toggle(
+                'show', !getAdminKey()
+            );
+        }
+
         async function loadEvents() {
             try {
                 const res = await fetch('/api/sos');
@@ -449,14 +500,34 @@
         }
 
         async function deleteEvent(id) {
-            await fetch(`/api/sos/${id}`, { method: 'DELETE' });
+            const key = getAdminKey();
+            if (!key) { setAdminKey(); return; }
+            const res = await fetch(`/api/sos/${id}`, {
+                method: 'DELETE',
+                headers: { 'x-api-key': key }
+            });
+            if (res.status === 401) {
+                alert('Unauthorized — check your admin key (Set Admin Key button).');
+                return;
+            }
             loadEvents();
         }
 
         async function clearAll() {
+            const key = getAdminKey();
+            if (!key) { setAdminKey(); return; }
             if (!confirm('Clear all SOS alerts?')) return;
+
             const events = await (await fetch('/api/sos')).json();
-            await Promise.all(events.map(e => fetch(`/api/sos/${e.id}`, { method: 'DELETE' })));
+            const results = await Promise.all(events.map(e =>
+                fetch(`/api/sos/${e.id}`, {
+                    method: 'DELETE',
+                    headers: { 'x-api-key': key }
+                })
+            ));
+            if (results.some(r => r.status === 401)) {
+                alert('Unauthorized — check your admin key (Set Admin Key button).');
+            }
             loadEvents();
         }
 
@@ -465,6 +536,7 @@
             return new Date(iso).toLocaleString();
         }
 
+        updateKeyBanner();
         loadEvents();
         setInterval(loadEvents, 10000);
     </script>
