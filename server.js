@@ -59,6 +59,26 @@ async function initDB() {
         ON live_locations (session_id, received_at DESC);
     `);
 
+    // Witnesses table — records every nearby Kavach phone at time of SOS
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS witnesses (
+            id           BIGSERIAL PRIMARY KEY,
+            session_id   TEXT NOT NULL,
+            rssi         INTEGER NOT NULL,
+            estimated_distance_m  TEXT,
+            witness_latitude      DOUBLE PRECISION,
+            witness_longitude     DOUBLE PRECISION,
+            timestamp    TIMESTAMPTZ NOT NULL,
+            received_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+    `);
+
+    // Index: fast lookup of all witnesses for a given session
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_witnesses_session
+        ON witnesses (session_id, received_at DESC);
+    `);
+
     console.log('✅ Database tables ready');
 }
 
@@ -272,6 +292,148 @@ app.get('/api/location', async (req, res) => {
     } catch (e) {
         console.error('❌ /api/location GET error:', e.message);
         res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// POST /api/witness — Witness phone reports it detected a nearby SOS beacon
+//
+// Called silently by BLEService.dart on the WITNESS phone.
+// The witness phone detected a Kavach BLE beacon within RSSI threshold.
+// It posts its own location + RSSI so police can find witnesses.
+//
+// Body (from BLEService._reportWitnessToServer):
+//   session_id            : string — which SOS session they detected
+//   rssi                  : int    — signal strength (higher = closer)
+//   estimated_distance_m  : string — rough distance estimate
+//   witness_latitude      : float  — witness phone's GPS lat (may be null)
+//   witness_longitude     : float  — witness phone's GPS lng (may be null)
+//   timestamp             : ISO string
+//
+// Auth: requires x-api-key header (same key as /api/sos and /api/location)
+// ════════════════════════════════════════════════════════════════════════════
+
+app.post('/api/witness', requireApiKey, async (req, res) => {
+    const {
+        session_id,
+        rssi,
+        estimated_distance_m,
+        witness_latitude,
+        witness_longitude,
+        timestamp,
+    } = req.body;
+
+    if (!session_id || rssi == null) {
+        return res.status(400).json({ error: 'Missing session_id or rssi' });
+    }
+
+    // Sanity check: RSSI should be negative and realistic (-100 to 0)
+    if (typeof rssi !== 'number' || rssi > 0 || rssi < -120) {
+        return res.status(400).json({ error: 'Invalid rssi value' });
+    }
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO witnesses
+                (session_id, rssi, estimated_distance_m,
+                 witness_latitude, witness_longitude, timestamp)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id`,
+            [
+                session_id,
+                rssi,
+                estimated_distance_m || null,
+                witness_latitude || null,
+                witness_longitude || null,
+                timestamp || new Date().toISOString(),
+            ]
+        );
+
+        console.log(
+            `📡 WITNESS REPORT — session: ${session_id}`,
+            `| RSSI: ${rssi} dBm`,
+            `| Distance: ~${estimated_distance_m}m`,
+            `| Witness GPS: ${witness_latitude}, ${witness_longitude}`
+        );
+
+        return res.status(200).json({ success: true, id: result.rows[0].id });
+    } catch (e) {
+        console.error('❌ /api/witness POST error:', e.message);
+        return res.status(500).json({ error: 'Database error' });
+    }
+});
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// GET /api/witness/:sessionId — All witnesses for a given SOS session
+//
+// Police / emergency contacts use this to see every Kavach phone
+// that was within 5-10m of the victim when SOS fired.
+// Sorted by RSSI descending (closest phone first).
+//
+// No auth required — same as GET /api/sos (read-only, public tracking).
+// Add auth here if you want to restrict witness data access.
+// ════════════════════════════════════════════════════════════════════════════
+
+app.get('/api/witness/:sessionId', async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT
+                id,
+                session_id,
+                rssi,
+                estimated_distance_m,
+                witness_latitude,
+                witness_longitude,
+                timestamp,
+                received_at
+             FROM witnesses
+             WHERE session_id = $1
+             ORDER BY rssi DESC, received_at ASC`,
+            // rssi DESC = strongest signal (closest phone) first
+            [req.params.sessionId]
+        );
+
+        return res.json({
+            session_id: req.params.sessionId,
+            witness_count: result.rows.length,
+            witnesses: result.rows,
+        });
+    } catch (e) {
+        console.error('❌ /api/witness GET error:', e.message);
+        return res.status(500).json({ error: 'Database error' });
+    }
+});
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// GET /api/witness — All witness reports across all sessions (admin view)
+//
+// Useful for the dashboard to show total witness coverage.
+// Returns last 200 records, newest first.
+// ════════════════════════════════════════════════════════════════════════════
+
+app.get('/api/witness', async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT
+                id,
+                session_id,
+                rssi,
+                estimated_distance_m,
+                witness_latitude,
+                witness_longitude,
+                timestamp,
+                received_at
+             FROM witnesses
+             ORDER BY received_at DESC
+             LIMIT 200`
+        );
+
+        return res.json(result.rows);
+    } catch (e) {
+        console.error('❌ /api/witness GET all error:', e.message);
+        return res.status(500).json({ error: 'Database error' });
     }
 });
 
