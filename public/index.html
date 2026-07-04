@@ -3,20 +3,20 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Kavach — SOS Dashboard</title>
     <style>
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            box-sizing: border-box
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #FFF8F0;
             color: #1C1B20;
-            min-height: 100vh;
+            min-height: 100vh
         }
 
         header {
@@ -26,50 +26,50 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            box-shadow: 0 4px 24px rgba(255, 107, 43, 0.35);
+            box-shadow: 0 4px 24px rgba(255, 107, 43, .35);
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 100
         }
 
-        .header-icon {
+        .hicon {
             width: 40px;
             height: 40px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, .2);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 20px
         }
 
         header h1 {
             font-size: 22px;
             font-weight: 900;
             color: #fff;
-            letter-spacing: 4px;
+            letter-spacing: 4px
         }
 
         header p {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-top: 1px;
+            color: rgba(255, 255, 255, .7);
+            margin-top: 1px
         }
 
         .live-badge {
             margin-left: auto;
-            background: rgba(255, 255, 255, 0.18);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, .18);
+            border: 1px solid rgba(255, 255, 255, .3);
             color: #fff;
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 700;
             letter-spacing: 1px;
-            animation: livePulse 2s infinite;
+            animation: lp 2s infinite
         }
 
-        @keyframes livePulse {
+        @keyframes lp {
 
             0%,
             100% {
@@ -77,7 +77,7 @@
             }
 
             50% {
-                opacity: 0.6
+                opacity: .6
             }
         }
 
@@ -85,7 +85,7 @@
             display: flex;
             gap: 16px;
             padding: 24px 32px 0;
-            flex-wrap: wrap;
+            flex-wrap: wrap
         }
 
         .stat {
@@ -93,86 +93,151 @@
             border: 1.5px solid #EDE8E0;
             border-radius: 16px;
             padding: 18px 24px;
-            min-width: 140px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            min-width: 130px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .05)
         }
 
         .stat .num {
-            font-size: 34px;
+            font-size: 32px;
             font-weight: 900;
-            color: #FF6B2B;
-            line-height: 1;
+            line-height: 1
+        }
+
+        .stat .num.orange {
+            color: #FF6B2B
+        }
+
+        .stat .num.blue {
+            color: #1A237E
+        }
+
+        .stat .num.green {
+            color: #2E7D32
         }
 
         .stat .lbl {
             font-size: 12px;
             color: #6B6880;
-            margin-top: 4px;
+            margin-top: 4px
         }
 
         .controls {
-            padding: 20px 32px 0;
+            padding: 16px 32px 0;
             display: flex;
             gap: 10px;
             align-items: center;
-            flex-wrap: wrap;
+            flex-wrap: wrap
         }
 
         button {
-            padding: 9px 20px;
+            padding: 9px 18px;
             border-radius: 10px;
             border: none;
             cursor: pointer;
             font-size: 13px;
             font-weight: 700;
-            transition: all 0.15s;
+            transition: all .15s
         }
 
         button:active {
-            transform: scale(0.96);
+            transform: scale(.96)
         }
 
-        .btn-refresh {
+        .b-refresh {
             background: #FF6B2B;
             color: #fff;
-            box-shadow: 0 4px 12px rgba(255, 107, 43, 0.3);
+            box-shadow: 0 4px 12px rgba(255, 107, 43, .3)
         }
 
-        .btn-clear {
+        .b-plain {
             background: #fff;
             color: #6B6880;
-            border: 1.5px solid #EDE8E0;
+            border: 1.5px solid #EDE8E0
         }
 
         .auto-lbl {
             margin-left: auto;
             font-size: 12px;
-            color: #6B6880;
+            color: #6B6880
         }
 
-        .events {
+        .tabs {
+            padding: 16px 32px 0;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .tab {
+            padding: 9px 20px;
+            border-radius: 10px;
+            border: 1.5px solid #EDE8E0;
+            background: #fff;
+            color: #6B6880;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all .15s
+        }
+
+        .tab:hover {
+            border-color: #aaa
+        }
+
+        .tab.a-orange {
+            background: #FF6B2B;
+            color: #fff;
+            border-color: #FF6B2B
+        }
+
+        .tab.a-blue {
+            background: #1A237E;
+            color: #fff;
+            border-color: #1A237E
+        }
+
+        .tab.a-green {
+            background: #2E7D32;
+            color: #fff;
+            border-color: #2E7D32
+        }
+
+        .banner {
+            background: #FFF3E0;
+            border: 1.5px solid rgba(186, 117, 23, .3);
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin: 12px 32px 0;
+            font-size: 12px;
+            color: #BA7517;
+            display: none
+        }
+
+        .banner.show {
+            display: block
+        }
+
+        .panel {
             padding: 20px 32px 40px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 14px
         }
 
-        .event-card {
+        .card {
             background: #fff;
             border: 1.5px solid #EDE8E0;
-            border-left: 5px solid #FF6B2B;
             border-radius: 16px;
             padding: 20px 24px;
             position: relative;
-            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
-            transition: box-shadow 0.2s, transform 0.2s;
-            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, .06);
+            animation: si .3s ease-out
         }
 
-        @keyframes slideIn {
+        @keyframes si {
             from {
                 opacity: 0;
-                transform: translateY(-10px)
+                transform: translateY(-8px)
             }
 
             to {
@@ -181,111 +246,172 @@
             }
         }
 
-        .event-card:hover {
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
-            transform: translateY(-1px);
+        .card:hover {
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .1);
+            transform: translateY(-1px)
         }
 
-        .event-top {
+        .card.sos-card {
+            border-left: 5px solid #FF6B2B
+        }
+
+        .card.suspect-card {
+            border-left: 5px solid #1A237E
+        }
+
+        .card.witness-card {
+            border-left: 5px solid #2E7D32
+        }
+
+        .card-top {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
+            margin-bottom: 14px;
+            flex-wrap: wrap
         }
 
-        .sos-badge {
-            background: #FFF0EB;
-            color: #E64A19;
-            border: 1px solid rgba(230, 74, 25, 0.25);
+        .badge {
             padding: 5px 13px;
             border-radius: 20px;
             font-size: 12px;
-            font-weight: 800;
+            font-weight: 800
         }
 
-        .event-time {
+        .badge.sos {
+            background: #FFF0EB;
+            color: #E64A19;
+            border: 1px solid rgba(230, 74, 25, .25)
+        }
+
+        .badge.sus {
+            background: #E8EAF6;
+            color: #1A237E;
+            border: 1px solid rgba(26, 35, 126, .25)
+        }
+
+        .badge.wit {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid rgba(46, 125, 50, .25)
+        }
+
+        .etime {
             font-size: 13px;
-            color: #6B6880;
+            color: #6B6880
         }
 
-        .event-id {
+        .eid {
             margin-left: auto;
             font-size: 11px;
-            color: #C4BDB6;
+            color: #C4BDB6
         }
 
-        .event-grid {
+        .rssi-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: 6px
+        }
+
+        .rp-close {
+            background: #E8F5E9;
+            color: #2E7D32
+        }
+
+        .rp-mid {
+            background: #FFF9C4;
+            color: #F57F17
+        }
+
+        .rp-far {
+            background: #FFEBEE;
+            color: #C62828
+        }
+
+        .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px
         }
 
-        .info-box {
-            background: #FFF8F0;
-            border: 1px solid #EDE8E0;
+        .ib {
             border-radius: 10px;
             padding: 10px 14px;
+            border: 1px solid #EDE8E0
         }
 
-        .info-box .key {
+        .ib.warm {
+            background: #FFF8F0
+        }
+
+        .ib.cool {
+            background: #F3F4FF
+        }
+
+        .ib.fresh {
+            background: #F1F8F1
+        }
+
+        .ib .k {
             font-size: 10px;
             color: #6B6880;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 3px;
+            margin-bottom: 3px
         }
 
-        .info-box .val {
-            font-size: 14px;
+        .ib .v {
+            font-size: 13px;
             color: #1C1B20;
             font-weight: 600;
-            word-break: break-all;
+            word-break: break-all
         }
 
         .btn-row {
             display: flex;
             gap: 10px;
             margin-top: 14px;
-            flex-wrap: wrap;
+            flex-wrap: wrap
         }
 
-        .map-btn {
+        a.map-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             background: #E8F5E9;
             color: #2E7D32;
-            border: 1.5px solid rgba(46, 125, 50, 0.25);
+            border: 1.5px solid rgba(46, 125, 50, .25);
             padding: 9px 16px;
             border-radius: 10px;
             text-decoration: none;
             font-size: 13px;
             font-weight: 700;
-            transition: background 0.15s;
+            transition: background .15s
         }
 
-        .map-btn:hover {
-            background: #C8E6C9;
+        a.map-btn:hover {
+            background: #C8E6C9
         }
 
-        .track-btn {
+        a.track-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             background: #FFF0EB;
             color: #E64A19;
-            border: 1.5px solid rgba(230, 74, 25, 0.25);
+            border: 1.5px solid rgba(230, 74, 25, .25);
             padding: 9px 16px;
             border-radius: 10px;
             text-decoration: none;
             font-size: 13px;
             font-weight: 700;
-            transition: background 0.15s;
-            animation: trackPulse 1.5s infinite;
+            animation: tp 1.5s infinite
         }
 
-        @keyframes trackPulse {
+        @keyframes tp {
 
             0%,
             100% {
@@ -293,16 +419,16 @@
             }
 
             50% {
-                opacity: 0.7
+                opacity: .7
             }
         }
 
-        .track-btn:hover {
-            background: #FFCCBC;
+        a.track-btn:hover {
             animation: none;
+            background: #FFCCBC
         }
 
-        .del-btn {
+        button.del-btn {
             position: absolute;
             top: 16px;
             right: 16px;
@@ -315,46 +441,45 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            border: none;
+            padding: 0
         }
 
-        .del-btn:hover {
-            background: #FFCCBC;
+        button.del-btn:hover {
+            background: #FFCCBC
+        }
+
+        button.sus-btn {
+            background: #E8EAF6;
+            color: #1A237E;
+            border: 1.5px solid rgba(26, 35, 126, .25);
+            font-size: 13px
         }
 
         .empty {
             text-align: center;
-            padding: 80px 20px;
-            color: #6B6880;
+            padding: 60px 20px;
+            color: #6B6880
         }
 
         .empty-icon {
-            font-size: 56px;
-            margin-bottom: 16px;
-            opacity: 0.4;
+            font-size: 52px;
+            margin-bottom: 14px;
+            opacity: .4
         }
 
         .empty h3 {
-            font-size: 18px;
+            font-size: 17px;
             color: #1C1B20;
-            margin-bottom: 8px;
+            margin-bottom: 6px
         }
 
-        /* Admin key prompt */
-        .key-banner {
-            background: #FFF3E0;
-            border: 1.5px solid rgba(186, 117, 23, 0.3);
-            border-radius: 12px;
-            padding: 10px 16px;
-            margin: 16px 32px 0;
-            font-size: 12px;
-            color: #BA7517;
-            display: none;
-        }
-
-        .key-banner.show {
-            display: block;
+        .sec-title {
+            padding: 20px 32px 4px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #6B6880;
+            text-transform: uppercase;
+            letter-spacing: 2px
         }
 
         @media(max-width:600px) {
@@ -362,12 +487,16 @@
             header,
             .stats,
             .controls,
-            .events,
-            .key-banner {
-                margin-left: 0;
-                margin-right: 0;
+            .panel,
+            .banner,
+            .tabs,
+            .sec-title {
                 padding-left: 16px;
-                padding-right: 16px;
+                padding-right: 16px
+            }
+
+            .stats {
+                gap: 10px
             }
         }
     </style>
@@ -376,7 +505,7 @@
 <body>
 
     <header>
-        <div class="header-icon">🛡️</div>
+        <div class="hicon">🛡️</div>
         <div>
             <h1>KAVACH</h1>
             <p>Live SOS Alert Dashboard • कवच</p>
@@ -386,159 +515,299 @@
 
     <div class="stats">
         <div class="stat">
-            <div class="num" id="totalCount">0</div>
-            <div class="lbl">Total SOS Alerts</div>
+            <div class="num orange" id="stTotal">0</div>
+            <div class="lbl">Total SOS</div>
         </div>
         <div class="stat">
-            <div class="num" id="todayCount">0</div>
+            <div class="num orange" id="stToday">0</div>
             <div class="lbl">Today</div>
         </div>
         <div class="stat">
-            <div class="num" id="lastTime">—</div>
-            <div class="lbl">Last Alert</div>
+            <div class="num orange" id="stLast">—</div>
+            <div class="lbl">Last Alert (IST)</div>
+        </div>
+        <div class="stat">
+            <div class="num blue" id="stSuspect">0</div>
+            <div class="lbl">Suspects</div>
+        </div>
+        <div class="stat">
+            <div class="num green" id="stWitness">0</div>
+            <div class="lbl">Witnesses</div>
         </div>
     </div>
 
     <div class="controls">
-        <button class="btn-refresh" onclick="loadEvents()">🔄 Refresh</button>
-        <button class="btn-clear" onclick="clearAll()">🗑️ Clear All</button>
-        <button class="btn-clear" onclick="setAdminKey()">🔑 Set Admin Key</button>
-        <span class="auto-lbl">Auto-refresh every 10 seconds</span>
+        <button class="b-refresh" onclick="loadAll()">🔄 Refresh</button>
+        <button class="b-plain" onclick="clearAllSOS()">🗑️ Clear SOS</button>
+        <button class="b-plain" onclick="setKey()">🔑 Set Admin Key</button>
+        <span class="auto-lbl">Auto-refresh every 10s</span>
     </div>
 
-    <div class="key-banner" id="keyBanner">
-        ⚠️ No admin key set — delete/clear actions will fail with 401.
-        Click "Set Admin Key" and enter the server's API_KEY to enable them.
+    <div class="banner" id="keyBanner">
+        ⚠️ No admin key set — click "Set Admin Key" and enter your server API_KEY to view all panels.
     </div>
 
-    <div class="events" id="eventList"></div>
+    <div class="tabs">
+        <button class="tab a-orange" id="t0" onclick="showTab(0)">🚨 SOS Alerts</button>
+        <button class="tab" id="t1" onclick="showTab(1)">🕵️ Suspects</button>
+        <button class="tab" id="t2" onclick="showTab(2)">📡 Witnesses</button>
+    </div>
+
+    <div id="p0">
+        <div class="panel" id="sosList"></div>
+    </div>
+    <div id="p1" style="display:none">
+        <div class="sec-title">🕵️ Nearby Devices During SOS — Police Use Only</div>
+        <div class="panel" id="suspectList"></div>
+    </div>
+    <div id="p2" style="display:none">
+        <div class="sec-title">📡 Kavach Users Who Were Nearby During SOS</div>
+        <div class="panel" id="witnessList"></div>
+    </div>
 
     <script>
-        // ── Admin key (for delete/clear) ──────────────────────────
-        // Stored only in this browser's localStorage, never sent on
-        // GET requests. Required because /api/sos DELETE is protected
-        // by the same x-api-key middleware as the mobile app's writes.
-        function getAdminKey() {
-            return localStorage.getItem('kavach_admin_key') || '';
+        // ── State ─────────────────────────────────────────────────────────
+        let currentTab = 0;
+        let currentSuspectSession = null;
+
+        // ── Key management ────────────────────────────────────────────────
+        function getKey() { return localStorage.getItem('kavach_admin_key') || ''; }
+        function setKey() {
+            const k = prompt('Enter server API_KEY:', getKey());
+            if (k !== null) { localStorage.setItem('kavach_admin_key', k.trim()); updateBanner(); loadAll(); }
+        }
+        function updateBanner() {
+            document.getElementById('keyBanner').classList.toggle('show', !getKey());
+        }
+        function authHeaders() { return { 'x-api-key': getKey() }; }
+
+        // ── Tabs ──────────────────────────────────────────────────────────
+        function showTab(n) {
+            currentTab = n;
+            [0, 1, 2].forEach(i => {
+                document.getElementById('p' + i).style.display = i === n ? '' : 'none';
+                const t = document.getElementById('t' + i);
+                t.className = 'tab';
+                if (i === n) t.classList.add(i === 0 ? 'a-orange' : i === 1 ? 'a-blue' : 'a-green');
+            });
         }
 
-        function setAdminKey() {
-            const current = getAdminKey();
-            const key = prompt(
-                'Enter server API_KEY (used only for delete/clear actions):',
-                current
-            );
-            if (key !== null) {
-                localStorage.setItem('kavach_admin_key', key.trim());
-                updateKeyBanner();
+        // ── Time → IST ────────────────────────────────────────────────────
+        function ist(iso) {
+            if (!iso) return '—';
+            return new Date(iso).toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+            });
+        }
+        function istShort(iso) {
+            if (!iso) return '—';
+            return new Date(iso).toLocaleTimeString('en-IN', {
+                timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true
+            });
+        }
+
+        // ── RSSI pill ─────────────────────────────────────────────────────
+        function rssiPill(rssi) {
+            if (rssi == null) return '';
+            const cls = rssi >= -60 ? 'rp-close' : rssi >= -70 ? 'rp-mid' : 'rp-far';
+            const dist = rssi >= -60 ? '~1-3m' : rssi >= -70 ? '~5-8m' : '>10m';
+            return `<span class="rssi-pill ${cls}">${rssi} dBm ${dist}</span>`;
+        }
+
+        // ── Load all ──────────────────────────────────────────────────────
+        async function loadAll() {
+            loadSOS();
+            if (getKey()) {
+                loadSuspects();
+                loadWitnesses();
             }
         }
 
-        function updateKeyBanner() {
-            document.getElementById('keyBanner').classList.toggle(
-                'show', !getAdminKey()
-            );
-        }
-
-        async function loadEvents() {
+        // ── SOS Events ────────────────────────────────────────────────────
+        async function loadSOS() {
+            if (!getKey()) return renderSOS([]);
             try {
-                const res = await fetch('/api/sos');
-                const events = await res.json();
-                renderEvents(events);
-                updateStats(events);
+                const r = await fetch('/api/sos', { headers: authHeaders() });
+                if (r.status === 401) { renderSOS([]); return; }
+                const data = await r.json();
+                renderSOS(Array.isArray(data) ? data : []);
+                updateStats(Array.isArray(data) ? data : []);
             } catch (e) { console.error(e); }
         }
 
-        function renderEvents(events) {
-            const container = document.getElementById('eventList');
+        function renderSOS(events) {
+            const c = document.getElementById('sosList');
             if (!events.length) {
-                container.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">🛡️</div>
-          <h3>No SOS alerts received yet</h3>
-          <p>When Kavach triggers, alerts will appear here instantly</p>
-        </div>`;
+                c.innerHTML = `<div class="empty"><div class="empty-icon">🛡️</div><h3>No SOS alerts yet</h3><p>When Kavach triggers, alerts appear here instantly</p></div>`;
                 return;
             }
-
-            container.innerHTML = events.map(e => `
-      <div class="event-card" id="card-${e.id}">
-        <button class="del-btn" onclick="deleteEvent(${e.id})">✕</button>
-        <div class="event-top">
-          <span class="sos-badge">🚨 ${e.event}</span>
-          <span class="event-time">${fmt(e.timestamp)}</span>
-          <span class="event-id">#${e.id}</span>
-        </div>
-        <div class="event-grid">
-          <div class="info-box"><div class="key">Device</div><div class="val">${e.device_name || '—'}</div></div>
-          <div class="info-box"><div class="key">IP Address</div><div class="val">${e.device_ip || '—'}</div></div>
-          <div class="info-box"><div class="key">Latitude</div><div class="val">${e.latitude ?? '—'}</div></div>
-          <div class="info-box"><div class="key">Longitude</div><div class="val">${e.longitude ?? '—'}</div></div>
-          <div class="info-box"><div class="key">Received At</div><div class="val">${fmt(e.received_at)}</div></div>
-        </div>
-        <div class="btn-row">
-          ${e.maps_link
-                    ? `<a class="map-btn" href="${e.maps_link}" target="_blank">📍 Open in Google Maps</a>`
-                    : ''}
-          ${e.session_id
-                    ? `<a class="track-btn" href="/track/${e.session_id}" target="_blank">🔴 Live Track Location</a>`
-                    : ''}
-        </div>
-      </div>`).join('');
+            c.innerHTML = events.map(e => `
+    <div class="card sos-card" id="card-${e.id}">
+      <button class="del-btn" onclick="deleteSOS(${e.id})">✕</button>
+      <div class="card-top">
+        <span class="badge sos">🚨 ${e.event}</span>
+        <span class="etime">${ist(e.timestamp)}</span>
+        <span class="eid">#${e.id}</span>
+      </div>
+      <div class="grid">
+        <div class="ib warm"><div class="k">Device</div><div class="v">${e.device_name || '—'}</div></div>
+        <div class="ib warm"><div class="k">IP Address</div><div class="v">${e.device_ip || '—'}</div></div>
+        <div class="ib warm"><div class="k">Latitude</div><div class="v">${e.latitude ?? '—'}</div></div>
+        <div class="ib warm"><div class="k">Longitude</div><div class="v">${e.longitude ?? '—'}</div></div>
+        <div class="ib warm"><div class="k">Session ID</div><div class="v">${e.session_id || '—'}</div></div>
+        <div class="ib warm"><div class="k">Received (IST)</div><div class="v">${ist(e.received_at)}</div></div>
+      </div>
+      <div class="btn-row">
+        ${e.maps_link ? `<a class="map-btn" href="${e.maps_link}" target="_blank">📍 Open in Maps</a>` : ''}
+        ${e.session_id ? `<a class="track-btn" href="/track/${e.session_id}" target="_blank">🔴 Live Track</a>` : ''}
+        ${e.session_id ? `<button class="sus-btn" onclick="viewSuspectsFor('${e.session_id}')">🕵️ View Suspects</button>` : ''}
+      </div>
+    </div>`).join('');
         }
 
         function updateStats(events) {
-            document.getElementById('totalCount').textContent = events.length;
-            const today = new Date().toDateString();
-            document.getElementById('todayCount').textContent =
-                events.filter(e => new Date(e.timestamp).toDateString() === today).length;
-            if (events.length) {
-                const d = new Date(events[0].timestamp);
-                document.getElementById('lastTime').textContent =
-                    d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }
+            document.getElementById('stTotal').textContent = events.length;
+            const todayIST = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+            document.getElementById('stToday').textContent =
+                events.filter(e => new Date(e.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) === todayIST).length;
+            if (events.length) document.getElementById('stLast').textContent = istShort(events[0].timestamp);
         }
 
-        async function deleteEvent(id) {
-            const key = getAdminKey();
-            if (!key) { setAdminKey(); return; }
-            const res = await fetch(`/api/sos/${id}`, {
-                method: 'DELETE',
-                headers: { 'x-api-key': key }
-            });
-            if (res.status === 401) {
-                alert('Unauthorized — check your admin key (Set Admin Key button).');
+        async function deleteSOS(id) {
+            const k = getKey();
+            if (!k) { setKey(); return; }
+            const r = await fetch(`/api/sos/${id}`, { method: 'DELETE', headers: { 'x-api-key': k } });
+            if (r.status === 401) { alert('Unauthorized — check admin key.'); return; }
+            loadSOS();
+        }
+
+        async function clearAllSOS() {
+            const k = getKey();
+            if (!k) { setKey(); return; }
+            if (!confirm('Delete ALL SOS alerts from database?')) return;
+            const events = await (await fetch('/api/sos', { headers: authHeaders() })).json();
+            if (!Array.isArray(events)) return;
+            await Promise.all(events.map(e => fetch(`/api/sos/${e.id}`, { method: 'DELETE', headers: { 'x-api-key': k } })));
+            loadSOS();
+        }
+
+        // ── Suspects ──────────────────────────────────────────────────────
+        async function loadSuspects() {
+            const k = getKey();
+            if (!k) return;
+            try {
+                const r = await fetch('/api/suspect', { headers: authHeaders() });
+                if (r.status === 401) return;
+                const data = await r.json();
+                const suspects = data.suspects || [];
+                document.getElementById('stSuspect').textContent = suspects.length;
+                if (currentTab === 1 && !currentSuspectSession) renderSuspects(suspects);
+            } catch (e) { console.error(e); }
+        }
+
+        async function viewSuspectsFor(sessionId) {
+            currentSuspectSession = sessionId;
+            showTab(1);
+            const k = getKey();
+            if (!k) { setKey(); return; }
+            try {
+                const r = await fetch(`/api/suspect/${sessionId}`, { headers: authHeaders() });
+                const data = await r.json();
+                renderSuspects(data.suspects || [], sessionId);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderSuspects(suspects, filterSession) {
+            const c = document.getElementById('suspectList');
+            if (!suspects.length) {
+                c.innerHTML = `<div class="empty"><div class="empty-icon">🕵️</div>
+      <h3>${filterSession ? 'No suspects for this session' : 'No suspect data yet'}</h3>
+      <p>Suspects are logged when a nearby Kavach phone detects the SOS beacon</p></div>`;
                 return;
             }
-            loadEvents();
+            const header = filterSession
+                ? `<div style="padding:0 0 10px;font-size:13px;color:#6B6880">
+        Session: <strong>${filterSession}</strong> &nbsp;
+        <a href="#" onclick="currentSuspectSession=null;loadSuspects();return false" style="color:#FF6B2B">Show All →</a>
+       </div>` : '';
+            c.innerHTML = header + suspects.map(s => `
+    <div class="card suspect-card">
+      <div class="card-top">
+        <span class="badge sus">🕵️ SUSPECT DEVICE</span>
+        ${rssiPill(s.rssi)}
+        <span class="etime">${ist(s.timestamp)}</span>
+        <span class="eid">#${s.id}</span>
+      </div>
+      <div class="grid">
+        <div class="ib cool"><div class="k">Android ID (Unique)</div><div class="v">${s.android_id || '—'}</div></div>
+        <div class="ib cool"><div class="k">Device Model</div><div class="v">${s.device_model || '—'}</div></div>
+        <div class="ib cool"><div class="k">Brand</div><div class="v">${s.device_brand || '—'}</div></div>
+        <div class="ib cool"><div class="k">Android Version</div><div class="v">${s.android_version || '—'}</div></div>
+        <div class="ib cool"><div class="k">IMEI</div><div class="v">${s.imei || 'Unavailable (Android 10+)'}</div></div>
+        <div class="ib cool"><div class="k">IP Address</div><div class="v">${s.ip_address || '—'}</div></div>
+        <div class="ib cool"><div class="k">GPS Latitude</div><div class="v">${s.suspect_latitude || '—'}</div></div>
+        <div class="ib cool"><div class="k">GPS Longitude</div><div class="v">${s.suspect_longitude || '—'}</div></div>
+        <div class="ib cool"><div class="k">Distance Est.</div><div class="v">~${s.estimated_distance_m || '?'}m</div></div>
+        <div class="ib cool"><div class="k">SOS Session</div><div class="v">${s.session_id || '—'}</div></div>
+      </div>
+      <div class="btn-row">
+        ${s.suspect_latitude && s.suspect_longitude
+                    ? `<a class="map-btn" href="https://maps.google.com/?q=${s.suspect_latitude},${s.suspect_longitude}" target="_blank">📍 Suspect Location</a>`
+                    : ''}
+      </div>
+    </div>`).join('');
         }
 
-        async function clearAll() {
-            const key = getAdminKey();
-            if (!key) { setAdminKey(); return; }
-            if (!confirm('Clear all SOS alerts?')) return;
+        // ── Witnesses ─────────────────────────────────────────────────────
+        async function loadWitnesses() {
+            const k = getKey();
+            if (!k) return;
+            try {
+                const r = await fetch('/api/witness', { headers: authHeaders() });
+                if (r.status === 401) return;
+                const data = await r.json();
+                const witnesses = Array.isArray(data) ? data : [];
+                document.getElementById('stWitness').textContent = witnesses.length;
+                if (currentTab === 2) renderWitnesses(witnesses);
+            } catch (e) { console.error(e); }
+        }
 
-            const events = await (await fetch('/api/sos')).json();
-            const results = await Promise.all(events.map(e =>
-                fetch(`/api/sos/${e.id}`, {
-                    method: 'DELETE',
-                    headers: { 'x-api-key': key }
-                })
-            ));
-            if (results.some(r => r.status === 401)) {
-                alert('Unauthorized — check your admin key (Set Admin Key button).');
+        function renderWitnesses(witnesses) {
+            const c = document.getElementById('witnessList');
+            if (!witnesses.length) {
+                c.innerHTML = `<div class="empty"><div class="empty-icon">📡</div>
+      <h3>No witness data yet</h3>
+      <p>Witnesses are Kavach users with protection ON who were nearby during an SOS</p></div>`;
+                return;
             }
-            loadEvents();
+            c.innerHTML = witnesses.map(w => `
+    <div class="card witness-card">
+      <div class="card-top">
+        <span class="badge wit">📡 WITNESS</span>
+        ${rssiPill(w.rssi)}
+        <span class="etime">${ist(w.timestamp)}</span>
+        <span class="eid">#${w.id}</span>
+      </div>
+      <div class="grid">
+        <div class="ib fresh"><div class="k">SOS Session</div><div class="v">${w.session_id || '—'}</div></div>
+        <div class="ib fresh"><div class="k">Distance Est.</div><div class="v">~${w.estimated_distance_m || '?'}m</div></div>
+        <div class="ib fresh"><div class="k">Witness Latitude</div><div class="v">${w.witness_latitude || '—'}</div></div>
+        <div class="ib fresh"><div class="k">Witness Longitude</div><div class="v">${w.witness_longitude || '—'}</div></div>
+      </div>
+      <div class="btn-row">
+        ${w.witness_latitude && w.witness_longitude
+                    ? `<a class="map-btn" href="https://maps.google.com/?q=${w.witness_latitude},${w.witness_longitude}" target="_blank">📍 Witness Location</a>`
+                    : ''}
+      </div>
+    </div>`).join('');
         }
 
-        function fmt(iso) {
-            if (!iso) return '—';
-            return new Date(iso).toLocaleString();
-        }
-
-        updateKeyBanner();
-        loadEvents();
-        setInterval(loadEvents, 10000);
+        // ── Boot ──────────────────────────────────────────────────────────
+        updateBanner();
+        loadAll();
+        setInterval(loadAll, 10000);
     </script>
 </body>
 
