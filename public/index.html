@@ -231,7 +231,8 @@
             padding: 20px 24px;
             position: relative;
             box-shadow: 0 2px 16px rgba(0, 0, 0, .06);
-            animation: si .3s ease-out
+            animation: si .3s ease-out;
+            transition: box-shadow .2s, transform .2s
         }
 
         @keyframes si {
@@ -528,7 +529,7 @@
         </div>
         <div class="stat">
             <div class="num blue" id="stSuspect">0</div>
-            <div class="lbl">Suspects</div>
+            <div class="lbl">Unique Suspects</div>
         </div>
         <div class="stat">
             <div class="num green" id="stWitness">0</div>
@@ -566,19 +567,31 @@
     </div>
 
     <script>
-        // ── State ─────────────────────────────────────────────────────────
+        // ── Cache ─────────────────────────────────────────────────────────
+        // Store fetched data so tab clicks always render immediately
+        // without needing a new network request
+        let cachedSOS = [];
+        let cachedSuspects = [];
+        let cachedWitnesses = [];
         let currentTab = 0;
         let currentSuspectSession = null;
 
         // ── Key management ────────────────────────────────────────────────
         function getKey() { return localStorage.getItem('kavach_admin_key') || ''; }
+
         function setKey() {
             const k = prompt('Enter server API_KEY:', getKey());
-            if (k !== null) { localStorage.setItem('kavach_admin_key', k.trim()); updateBanner(); loadAll(); }
+            if (k !== null) {
+                localStorage.setItem('kavach_admin_key', k.trim());
+                updateBanner();
+                loadAll();
+            }
         }
+
         function updateBanner() {
             document.getElementById('keyBanner').classList.toggle('show', !getKey());
         }
+
         function authHeaders() { return { 'x-api-key': getKey() }; }
 
         // ── Tabs ──────────────────────────────────────────────────────────
@@ -590,6 +603,10 @@
                 t.className = 'tab';
                 if (i === n) t.classList.add(i === 0 ? 'a-orange' : i === 1 ? 'a-blue' : 'a-green');
             });
+            // Render from cache immediately on tab switch — no extra fetch
+            if (n === 0) renderSOS(cachedSOS);
+            if (n === 1 && !currentSuspectSession) renderSuspects(cachedSuspects);
+            if (n === 2) renderWitnesses(cachedWitnesses);
         }
 
         // ── Time → IST ────────────────────────────────────────────────────
@@ -616,55 +633,77 @@
             return `<span class="rssi-pill ${cls}">${rssi} dBm ${dist}</span>`;
         }
 
+        // ── No-key message ────────────────────────────────────────────────
+        function noKeyMsg(icon, label) {
+            return `<div class="empty">
+    <div class="empty-icon">${icon}</div>
+    <h3>Admin key required</h3>
+    <p>Click "Set Admin Key" above to view ${label}</p>
+  </div>`;
+        }
+
         // ── Load all ──────────────────────────────────────────────────────
         async function loadAll() {
-            loadSOS();
+            await loadSOS();
             if (getKey()) {
-                loadSuspects();
-                loadWitnesses();
+                await loadSuspects();
+                await loadWitnesses();
+            } else {
+                // Show no-key message in all panels if key not set
+                document.getElementById('sosList').innerHTML = noKeyMsg('🛡️', 'SOS alerts');
+                document.getElementById('suspectList').innerHTML = noKeyMsg('🕵️', 'suspect data');
+                document.getElementById('witnessList').innerHTML = noKeyMsg('📡', 'witness data');
             }
         }
 
         // ── SOS Events ────────────────────────────────────────────────────
         async function loadSOS() {
-            if (!getKey()) return renderSOS([]);
+            if (!getKey()) {
+                cachedSOS = [];
+                return;
+            }
             try {
                 const r = await fetch('/api/sos', { headers: authHeaders() });
-                if (r.status === 401) { renderSOS([]); return; }
+                if (r.status === 401) { cachedSOS = []; renderSOS([]); return; }
                 const data = await r.json();
-                renderSOS(Array.isArray(data) ? data : []);
-                updateStats(Array.isArray(data) ? data : []);
-            } catch (e) { console.error(e); }
+                cachedSOS = Array.isArray(data) ? data : [];
+                updateStats(cachedSOS);
+                if (currentTab === 0) renderSOS(cachedSOS);
+            } catch (e) { console.error('loadSOS:', e); }
         }
 
         function renderSOS(events) {
             const c = document.getElementById('sosList');
             if (!events.length) {
-                c.innerHTML = `<div class="empty"><div class="empty-icon">🛡️</div><h3>No SOS alerts yet</h3><p>When Kavach triggers, alerts appear here instantly</p></div>`;
+                c.innerHTML = `<div class="empty">
+      <div class="empty-icon">🛡️</div>
+      <h3>No SOS alerts yet</h3>
+      <p>When Kavach triggers, alerts appear here instantly</p>
+    </div>`;
                 return;
             }
             c.innerHTML = events.map(e => `
-    <div class="card sos-card" id="card-${e.id}">
-      <button class="del-btn" onclick="deleteSOS(${e.id})">✕</button>
-      <div class="card-top">
-        <span class="badge sos">🚨 ${e.event}</span>
-        <span class="etime">${ist(e.timestamp)}</span>
-        <span class="eid">#${e.id}</span>
-      </div>
-      <div class="grid">
-        <div class="ib warm"><div class="k">Device</div><div class="v">${e.device_name || '—'}</div></div>
-        <div class="ib warm"><div class="k">IP Address</div><div class="v">${e.device_ip || '—'}</div></div>
-        <div class="ib warm"><div class="k">Latitude</div><div class="v">${e.latitude ?? '—'}</div></div>
-        <div class="ib warm"><div class="k">Longitude</div><div class="v">${e.longitude ?? '—'}</div></div>
-        <div class="ib warm"><div class="k">Session ID</div><div class="v">${e.session_id || '—'}</div></div>
-        <div class="ib warm"><div class="k">Received (IST)</div><div class="v">${ist(e.received_at)}</div></div>
-      </div>
-      <div class="btn-row">
-        ${e.maps_link ? `<a class="map-btn" href="${e.maps_link}" target="_blank">📍 Open in Maps</a>` : ''}
-        ${e.session_id ? `<a class="track-btn" href="/track/${e.session_id}" target="_blank">🔴 Live Track</a>` : ''}
-        ${e.session_id ? `<button class="sus-btn" onclick="viewSuspectsFor('${e.session_id}')">🕵️ View Suspects</button>` : ''}
-      </div>
-    </div>`).join('');
+  <div class="card sos-card" id="card-${e.id}">
+    <button class="del-btn" onclick="deleteSOS(${e.id})">✕</button>
+    <div class="card-top">
+      <span class="badge sos">🚨 ${e.event}</span>
+      <span class="etime">${ist(e.timestamp)}</span>
+      <span class="eid">#${e.id}</span>
+    </div>
+    <div class="grid">
+      <div class="ib warm"><div class="k">Device</div><div class="v">${e.device_name || '—'}</div></div>
+      <div class="ib warm"><div class="k">IP Address</div><div class="v">${e.device_ip || '—'}</div></div>
+      <div class="ib warm"><div class="k">Latitude</div><div class="v">${e.latitude ?? '—'}</div></div>
+      <div class="ib warm"><div class="k">Longitude</div><div class="v">${e.longitude ?? '—'}</div></div>
+      <div class="ib warm"><div class="k">Session ID</div><div class="v">${e.session_id || '—'}</div></div>
+      <div class="ib warm"><div class="k">Received (IST)</div><div class="v">${ist(e.received_at)}</div></div>
+    </div>
+    <div class="btn-row">
+      ${e.maps_link ? `<a class="map-btn" href="${e.maps_link}" target="_blank">📍 Open in Maps</a>` : ''}
+      ${e.session_id ? `<a class="track-btn" href="/track/${e.session_id}" target="_blank">🔴 Live Track</a>` : ''}
+      ${e.session_id ? `<button class="sus-btn" onclick="viewSuspectsFor('${e.session_id}')">🕵️ View Suspects</button>` : ''}
+    </div>
+  </div>`).join('');
         }
 
         function updateStats(events) {
@@ -680,17 +719,22 @@
             if (!k) { setKey(); return; }
             const r = await fetch(`/api/sos/${id}`, { method: 'DELETE', headers: { 'x-api-key': k } });
             if (r.status === 401) { alert('Unauthorized — check admin key.'); return; }
-            loadSOS();
+            cachedSOS = cachedSOS.filter(e => e.id !== id);
+            renderSOS(cachedSOS);
+            updateStats(cachedSOS);
         }
 
         async function clearAllSOS() {
             const k = getKey();
             if (!k) { setKey(); return; }
             if (!confirm('Delete ALL SOS alerts from database?')) return;
-            const events = await (await fetch('/api/sos', { headers: authHeaders() })).json();
+            const r = await fetch('/api/sos', { headers: authHeaders() });
+            const events = await r.json();
             if (!Array.isArray(events)) return;
             await Promise.all(events.map(e => fetch(`/api/sos/${e.id}`, { method: 'DELETE', headers: { 'x-api-key': k } })));
-            loadSOS();
+            cachedSOS = [];
+            renderSOS([]);
+            updateStats([]);
         }
 
         // ── Suspects ──────────────────────────────────────────────────────
@@ -701,10 +745,14 @@
                 const r = await fetch('/api/suspect', { headers: authHeaders() });
                 if (r.status === 401) return;
                 const data = await r.json();
-                const suspects = data.suspects || [];
-                document.getElementById('stSuspect').textContent = suspects.length;
-                if (currentTab === 1 && !currentSuspectSession) renderSuspects(suspects);
-            } catch (e) { console.error(e); }
+                cachedSuspects = data.suspects || [];
+
+                // Count unique Android IDs — same device may appear multiple times
+                const uniqueIds = new Set(cachedSuspects.map(s => s.android_id).filter(Boolean));
+                document.getElementById('stSuspect').textContent = uniqueIds.size || cachedSuspects.length;
+
+                if (currentTab === 1 && !currentSuspectSession) renderSuspects(cachedSuspects);
+            } catch (e) { console.error('loadSuspects:', e); }
         }
 
         async function viewSuspectsFor(sessionId) {
@@ -716,48 +764,51 @@
                 const r = await fetch(`/api/suspect/${sessionId}`, { headers: authHeaders() });
                 const data = await r.json();
                 renderSuspects(data.suspects || [], sessionId);
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error('viewSuspectsFor:', e); }
         }
 
         function renderSuspects(suspects, filterSession) {
             const c = document.getElementById('suspectList');
             if (!suspects.length) {
-                c.innerHTML = `<div class="empty"><div class="empty-icon">🕵️</div>
+                c.innerHTML = `<div class="empty">
+      <div class="empty-icon">🕵️</div>
       <h3>${filterSession ? 'No suspects for this session' : 'No suspect data yet'}</h3>
-      <p>Suspects are logged when a nearby Kavach phone detects the SOS beacon</p></div>`;
+      <p>Suspects are logged when a nearby Kavach phone detects the SOS beacon via BLE</p>
+    </div>`;
                 return;
             }
             const header = filterSession
                 ? `<div style="padding:0 0 10px;font-size:13px;color:#6B6880">
-        Session: <strong>${filterSession}</strong> &nbsp;
-        <a href="#" onclick="currentSuspectSession=null;loadSuspects();return false" style="color:#FF6B2B">Show All →</a>
+        Showing suspects for: <strong>${filterSession}</strong> &nbsp;
+        <a href="#" onclick="currentSuspectSession=null;renderSuspects(cachedSuspects);return false"
+           style="color:#FF6B2B;font-weight:700">Show All →</a>
        </div>` : '';
             c.innerHTML = header + suspects.map(s => `
-    <div class="card suspect-card">
-      <div class="card-top">
-        <span class="badge sus">🕵️ SUSPECT DEVICE</span>
-        ${rssiPill(s.rssi)}
-        <span class="etime">${ist(s.timestamp)}</span>
-        <span class="eid">#${s.id}</span>
-      </div>
-      <div class="grid">
-        <div class="ib cool"><div class="k">Android ID (Unique)</div><div class="v">${s.android_id || '—'}</div></div>
-        <div class="ib cool"><div class="k">Device Model</div><div class="v">${s.device_model || '—'}</div></div>
-        <div class="ib cool"><div class="k">Brand</div><div class="v">${s.device_brand || '—'}</div></div>
-        <div class="ib cool"><div class="k">Android Version</div><div class="v">${s.android_version || '—'}</div></div>
-        <div class="ib cool"><div class="k">IMEI</div><div class="v">${s.imei || 'Unavailable (Android 10+)'}</div></div>
-        <div class="ib cool"><div class="k">IP Address</div><div class="v">${s.ip_address || '—'}</div></div>
-        <div class="ib cool"><div class="k">GPS Latitude</div><div class="v">${s.suspect_latitude || '—'}</div></div>
-        <div class="ib cool"><div class="k">GPS Longitude</div><div class="v">${s.suspect_longitude || '—'}</div></div>
-        <div class="ib cool"><div class="k">Distance Est.</div><div class="v">~${s.estimated_distance_m || '?'}m</div></div>
-        <div class="ib cool"><div class="k">SOS Session</div><div class="v">${s.session_id || '—'}</div></div>
-      </div>
-      <div class="btn-row">
-        ${s.suspect_latitude && s.suspect_longitude
+  <div class="card suspect-card">
+    <div class="card-top">
+      <span class="badge sus">🕵️ SUSPECT DEVICE</span>
+      ${rssiPill(s.rssi)}
+      <span class="etime">${ist(s.timestamp)}</span>
+      <span class="eid">#${s.id}</span>
+    </div>
+    <div class="grid">
+      <div class="ib cool"><div class="k">Android ID (Unique)</div><div class="v">${s.android_id || '—'}</div></div>
+      <div class="ib cool"><div class="k">Device Model</div><div class="v">${s.device_model || '—'}</div></div>
+      <div class="ib cool"><div class="k">Brand</div><div class="v">${s.device_brand || '—'}</div></div>
+      <div class="ib cool"><div class="k">Android Version</div><div class="v">${s.android_version || '—'}</div></div>
+      <div class="ib cool"><div class="k">IMEI</div><div class="v">${s.imei || 'Unavailable (Android 10+)'}</div></div>
+      <div class="ib cool"><div class="k">IP Address</div><div class="v">${s.ip_address || '—'}</div></div>
+      <div class="ib cool"><div class="k">GPS Latitude</div><div class="v">${s.suspect_latitude || '—'}</div></div>
+      <div class="ib cool"><div class="k">GPS Longitude</div><div class="v">${s.suspect_longitude || '—'}</div></div>
+      <div class="ib cool"><div class="k">Distance Est.</div><div class="v">~${s.estimated_distance_m || '?'}m</div></div>
+      <div class="ib cool"><div class="k">SOS Session</div><div class="v">${s.session_id || '—'}</div></div>
+    </div>
+    <div class="btn-row">
+      ${s.suspect_latitude && s.suspect_longitude
                     ? `<a class="map-btn" href="https://maps.google.com/?q=${s.suspect_latitude},${s.suspect_longitude}" target="_blank">📍 Suspect Location</a>`
                     : ''}
-      </div>
-    </div>`).join('');
+    </div>
+  </div>`).join('');
         }
 
         // ── Witnesses ─────────────────────────────────────────────────────
@@ -768,40 +819,42 @@
                 const r = await fetch('/api/witness', { headers: authHeaders() });
                 if (r.status === 401) return;
                 const data = await r.json();
-                const witnesses = Array.isArray(data) ? data : [];
-                document.getElementById('stWitness').textContent = witnesses.length;
-                if (currentTab === 2) renderWitnesses(witnesses);
-            } catch (e) { console.error(e); }
+                cachedWitnesses = Array.isArray(data) ? data : [];
+                document.getElementById('stWitness').textContent = cachedWitnesses.length;
+                if (currentTab === 2) renderWitnesses(cachedWitnesses);
+            } catch (e) { console.error('loadWitnesses:', e); }
         }
 
         function renderWitnesses(witnesses) {
             const c = document.getElementById('witnessList');
             if (!witnesses.length) {
-                c.innerHTML = `<div class="empty"><div class="empty-icon">📡</div>
+                c.innerHTML = `<div class="empty">
+      <div class="empty-icon">📡</div>
       <h3>No witness data yet</h3>
-      <p>Witnesses are Kavach users with protection ON who were nearby during an SOS</p></div>`;
+      <p>Witnesses are Kavach users with protection ON who were nearby during an SOS</p>
+    </div>`;
                 return;
             }
             c.innerHTML = witnesses.map(w => `
-    <div class="card witness-card">
-      <div class="card-top">
-        <span class="badge wit">📡 WITNESS</span>
-        ${rssiPill(w.rssi)}
-        <span class="etime">${ist(w.timestamp)}</span>
-        <span class="eid">#${w.id}</span>
-      </div>
-      <div class="grid">
-        <div class="ib fresh"><div class="k">SOS Session</div><div class="v">${w.session_id || '—'}</div></div>
-        <div class="ib fresh"><div class="k">Distance Est.</div><div class="v">~${w.estimated_distance_m || '?'}m</div></div>
-        <div class="ib fresh"><div class="k">Witness Latitude</div><div class="v">${w.witness_latitude || '—'}</div></div>
-        <div class="ib fresh"><div class="k">Witness Longitude</div><div class="v">${w.witness_longitude || '—'}</div></div>
-      </div>
-      <div class="btn-row">
-        ${w.witness_latitude && w.witness_longitude
+  <div class="card witness-card">
+    <div class="card-top">
+      <span class="badge wit">📡 WITNESS</span>
+      ${rssiPill(w.rssi)}
+      <span class="etime">${ist(w.timestamp)}</span>
+      <span class="eid">#${w.id}</span>
+    </div>
+    <div class="grid">
+      <div class="ib fresh"><div class="k">SOS Session</div><div class="v">${w.session_id || '—'}</div></div>
+      <div class="ib fresh"><div class="k">Distance Est.</div><div class="v">~${w.estimated_distance_m || '?'}m</div></div>
+      <div class="ib fresh"><div class="k">Witness Latitude</div><div class="v">${w.witness_latitude || '—'}</div></div>
+      <div class="ib fresh"><div class="k">Witness Longitude</div><div class="v">${w.witness_longitude || '—'}</div></div>
+    </div>
+    <div class="btn-row">
+      ${w.witness_latitude && w.witness_longitude
                     ? `<a class="map-btn" href="https://maps.google.com/?q=${w.witness_latitude},${w.witness_longitude}" target="_blank">📍 Witness Location</a>`
                     : ''}
-      </div>
-    </div>`).join('');
+    </div>
+  </div>`).join('');
         }
 
         // ── Boot ──────────────────────────────────────────────────────────

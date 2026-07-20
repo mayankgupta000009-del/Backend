@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kavach — Trip Tracking</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #FFF8F0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #FF6B2B, #E64A19);
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(255, 107, 43, 0.35);
+        }
+
+        header h1 {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 3px;
+        }
+
+        header p {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 12px;
+        }
+
+        .live-dot {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .status-banner {
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-banner.active {
+            background: #FFF0EB;
+            border: 1.5px solid rgba(255, 107, 43, 0.3);
+        }
+
+        .status-banner.completed {
+            background: #EAF7EC;
+            border: 1.5px solid rgba(46, 125, 50, 0.3);
+        }
+
+        .status-banner.cancelled {
+            background: #F2F1F5;
+            border: 1.5px solid #D8D5E0;
+        }
+
+        .status-banner .icon {
+            font-size: 26px;
+        }
+
+        .status-banner .title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #1C1B20;
+        }
+
+        .status-banner .sub {
+            font-size: 12px;
+            color: #6B6880;
+            margin-top: 2px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1.5px solid #EDE8E0;
+            border-radius: 20px;
+            padding: 22px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .map-card {
+            background: #fff;
+            border: 1.5px solid #EDE8E0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        #map {
+            width: 100%;
+            height: 260px;
+            background: #F2EEE6;
+        }
+
+        .map-placeholder {
+            width: 100%;
+            height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 8px;
+            color: #6B6880;
+            font-size: 13px;
+            background: #F2EEE6;
+        }
+
+        .marker-user {
+            width: 18px;
+            height: 18px;
+            background: #FF6B2B;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(255, 107, 43, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .marker-user.completed {
+            background: #2E7D32;
+            box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .marker-dest {
+            font-size: 30px;
+            line-height: 1;
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+        }
+
+        .leaflet-control-attribution {
+            font-size: 9px !important;
+        }
+
+        .dest-label {
+            font-size: 11px;
+            color: #6B6880;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .dest-value {
+            font-size: 17px;
+            font-weight: 800;
+            color: #1C1B20;
+            margin-bottom: 20px;
+        }
+
+        .progress-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+        }
+
+        .progress-pct {
+            font-size: 28px;
+            font-weight: 900;
+            color: #FF6B2B;
+        }
+
+        .eta-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1C1B20;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background: #F2EEE6;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF6B2B, #FF9E5E);
+            border-radius: 6px;
+            transition: width 0.6s ease;
+        }
+
+        .progress-fill.completed {
+            background: linear-gradient(90deg, #43A047, #2E7D32);
+        }
+
+        .map-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #FF6B2B, #E64A19);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 800;
+            border-radius: 16px;
+            text-decoration: none;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(255, 107, 43, 0.35);
+            transition: transform 0.15s;
+        }
+
+        .map-btn:active {
+            transform: scale(0.98);
+        }
+
+        .map-btn.disabled {
+            background: #C9C5D0;
+            box-shadow: none;
+            pointer-events: none;
+        }
+
+        .update-info {
+            text-align: center;
+            color: #6B6880;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        .update-info span {
+            color: #FF6B2B;
+            font-weight: 700;
+        }
+
+        .not-found {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6B6880;
+        }
+
+        .not-found .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .not-found h3 {
+            font-size: 18px;
+            color: #1C1B20;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <h1>KAVACH</h1>
+            <p>🚶 Live Trip Tracking</p>
+        </div>
+        <div class="live-dot" id="liveDot">
+            <div class="dot"></div>
+            LIVE
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="map-card">
+            <div id="map"></div>
+        </div>
+        <div id="content">
+            <div class="not-found">
+                <div class="icon">📍</div>
+                <h3>Loading trip...</h3>
+                <p>Fetching latest location</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get session ID from URL: /trip/SESSION_ID
+        const sessionId = window.location.pathname.split('/trip/')[1];
+        let pollTimer = null;
+        let updateCount = 0;
+
+        // ── Live map state ────────────────────────────────────────
+        // Leaflet + OpenStreetMap tiles — free, no API key. Straight-
+        // line only (no road routing), same as the ETA calculation
+        // TripService sends: good enough to SEE the movement live,
+        // not meant to replace the "Open Route" turn-by-turn button.
+        let map = null;
+        let userMarker = null;
+        let destMarker = null;
+        let routeLine = null;
+        let animFrameId = null;
+
+        function ensureMap(destLat, destLng) {
+            if (map) return;
+            map = L.map('map', { zoomControl: true, attributionControl: true })
+                .setView([destLat, destLng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors',
+            }).addTo(map);
+
+            destMarker = L.marker([destLat, destLng], {
+                icon: L.divIcon({
+                    className: '',
+                    html: '<div class="marker-dest">📍</div>',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 28],
+                }),
+            }).addTo(map).bindPopup('Destination');
+        }
+
+        // ── Smooth glide between two points ─────────────────────────
+        // The exact same trick Rapido/Uber use: the server only reports
+        // a real position every few seconds, but the dot is animated
+        // continuously between the last two known points instead of
+        // snapping, so it LOOKS like a continuous live feed even though
+        // the underlying updates are chunky. Duration is tuned to be a
+        // little shorter than the expected report interval (8s from the
+        // phone) so the marker settles before the next update lands
+        // rather than visibly waiting.
+        const GLIDE_DURATION_MS = 6000;
+
+        function animateMarkerTo(marker, toLatLng) {
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+
+            const fromLatLng = marker.getLatLng();
+            const start = performance.now();
+
+            function step(now) {
+                const t = Math.min(1, (now - start) / GLIDE_DURATION_MS);
+                // ease-out — starts faster, settles gently, feels less robotic than linear
+                const eased = 1 - Math.pow(1 - t, 2);
+                const lat = fromLatLng.lat + (toLatLng[0] - fromLatLng.lat) * eased;
+                const lng = fromLatLng.lng + (toLatLng[1] - fromLatLng.lng) * eased;
+                marker.setLatLng([lat, lng]);
+                if (t < 1) {
+                    animFrameId = requestAnimationFrame(step);
+                } else {
+                    animFrameId = null;
+                }
+            }
+            animFrameId = requestAnimationFrame(step);
+        }
+
+        function updateMap(data, animate) {
+            if (data.destination_latitude == null || data.destination_longitude == null) return;
+            ensureMap(data.destination_latitude, data.destination_longitude);
+
+            const hasUser = data.current_latitude != null && data.current_longitude != null;
+            const isCompleted = data.status === 'completed';
+
+            if (hasUser) {
+                const pos = [data.current_latitude, data.current_longitude];
+                const icon = L.divIcon({
+                    className: '',
+                    html: `<div class="marker-user ${isCompleted ? 'completed' : ''}"></div>`,
+                    iconSize: [18, 18],
+                    iconAnchor: [9, 9],
+                });
+
+                if (userMarker) {
+                    userMarker.setIcon(icon);
+                    if (animate) {
+                        animateMarkerTo(userMarker, pos);
+                    } else {
+                        userMarker.setLatLng(pos);
+                    }
+                } else {
+                    userMarker = L.marker(pos, { icon }).addTo(map).bindPopup('Live position');
+                }
+
+                const destPos = [data.destination_latitude, data.destination_longitude];
+                if (routeLine) {
+                    routeLine.setLatLngs([pos, destPos]);
+                } else {
+                    routeLine = L.polyline([pos, destPos], {
+                        color: '#FF6B2B',
+                        weight: 3,
+                        opacity: 0.55,
+                        dashArray: '6, 8',
+                    }).addTo(map);
+                }
+
+                // Keep both markers in view as the user moves, but don't
+                // fight the person if they've manually panned/zoomed —
+                // only auto-fit on the first couple of updates.
+                if (updateCount <= 2) {
+                    map.fitBounds(L.latLngBounds([pos, destPos]), { padding: [36, 36] });
+                }
+            }
+        }
+
+        // ── Live WebSocket — instant push, same idea as Rapido/Uber ──
+        // Falls back to the existing HTTP polling below if this can't
+        // connect (corporate proxy blocking WS, brief network issue,
+        // etc.) — polling keeps running regardless as a safety net, so
+        // nothing breaks either way, this only makes updates smoother
+        // and more instant when it's available.
+        let ws = null;
+        let wsReconnectTimer = null;
+
+        function connectWebSocket() {
+            if (!sessionId) return;
+            try {
+                const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/trip';
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    ws.send(JSON.stringify({ type: 'subscribe', session_id: sessionId }));
+                };
+
+                ws.onmessage = (event) => {
+                    let msg;
+                    try { msg = JSON.parse(event.data); } catch { return; }
+
+                    if (msg.type === 'location') {
+                        updateCount++;
+                        updateMap(msg, true);
+                        updateLiveNumbers(msg);
+                    } else if (msg.type === 'ended') {
+                        // Authoritative final state (address, exact status
+                        // text) still comes from the REST endpoint — this
+                        // just triggers an immediate fetch instead of
+                        // waiting up to 15s for the next scheduled poll.
+                        fetchTrip();
+                    }
+                };
+
+                ws.onclose = () => {
+                    ws = null;
+                    // Retry a few seconds later — harmless if the trip
+                    // has already ended, since the server just won't
+                    // have anything to push once polling detects that.
+                    if (!wsReconnectTimer) {
+                        wsReconnectTimer = setTimeout(() => {
+                            wsReconnectTimer = null;
+                            connectWebSocket();
+                        }, 5000);
+                    }
+                };
+
+                ws.onerror = () => {
+                    try { ws.close(); } catch (_) { }
+                };
+            } catch (e) {
+                console.error('WebSocket connect failed:', e);
+            }
+        }
+
+        // Lightweight update for the progress/ETA numbers on a live WS
+        // push, without touching the map. Full renderTrip() (which also
+        // rebuilds this) still runs on every REST poll as the source of
+        // truth — this just avoids waiting for that when WS already has
+        // fresher numbers.
+        function updateLiveNumbers(data) {
+            const pctEl = document.querySelector('.progress-pct');
+            const etaEl = document.querySelector('.eta-text');
+            const fillEl = document.querySelector('.progress-fill');
+            if (!pctEl || !etaEl || !fillEl) return;
+
+            const pct = Math.round((data.progress_percent || 0) * 100);
+            pctEl.textContent = `${pct}%`;
+            etaEl.textContent = fmtEta(data.eta_minutes);
+            fillEl.style.width = `${pct}%`;
+        }
+
+        function fmtEta(mins) {
+            if (mins == null) return 'Calculating...';
+            if (mins <= 0) return 'Arriving now';
+            if (mins === 1) return '~1 min remaining';
+            if (mins < 60) return `~${mins} min remaining`;
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            return `~${h}h ${m}m remaining`;
+        }
+
+        function timeAgo(iso) {
+            if (!iso) return '—';
+            const secs = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+            if (secs < 5) return 'just now';
+            if (secs < 60) return `${secs}s ago`;
+            const mins = Math.floor(secs / 60);
+            return `${mins}m ago`;
+        }
+
+        async function fetchTrip() {
+            if (!sessionId) {
+                showError('Invalid tracking link');
+                return;
+            }
+            try {
+                const res = await fetch(`/api/trips/${sessionId}`);
+                if (res.status === 404) {
+                    showError('Trip not found — the link may be invalid');
+                    return;
+                }
+                const data = await res.json();
+                updateCount++;
+                renderTrip(data);
+                updateMap(data, false);
+
+                if (data.status !== 'active' && pollTimer) {
+                    clearInterval(pollTimer);
+                    pollTimer = null;
+                    document.getElementById('liveDot').style.display = 'none';
+                    closeWebSocket();
+                }
+            } catch (e) {
+                console.error('Fetch error:', e);
+            }
+        }
+
+        function renderTrip(data) {
+            const isActive = data.status === 'active';
+            const isCompleted = data.status === 'completed';
+            const pct = Math.round((data.progress_percent || 0) * 100);
+            const hasPosition = data.current_latitude != null && data.current_longitude != null;
+            const mapsLink = hasPosition
+                ? `https://www.google.com/maps/dir/?api=1&destination=${data.destination_latitude},${data.destination_longitude}&origin=${data.current_latitude},${data.current_longitude}&travelmode=walking`
+                : null;
+
+            const banner = isCompleted
+                ? { cls: 'completed', icon: '✅', title: 'Arrived safely', sub: 'This trip has ended' }
+                : isActive
+                    ? { cls: 'active', icon: '🚶', title: 'Trip in progress', sub: 'Live location updating automatically' }
+                    : { cls: 'cancelled', icon: 'ℹ️', title: 'Trip ended', sub: 'Tracking was stopped before arrival' };
+
+            document.getElementById('content').innerHTML = `
+      <div class="status-banner ${banner.cls}">
+        <div class="icon">${banner.icon}</div>
+        <div>
+          <div class="title">${banner.title}</div>
+          <div class="sub">${banner.sub}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="dest-label">📍 Destination</div>
+        <div class="dest-value">${data.destination_address || 'Unknown destination'}</div>
+
+        <div class="progress-row">
+          <div class="progress-pct">${pct}%</div>
+          <div class="eta-text">${isActive ? fmtEta(data.eta_minutes) : (isCompleted ? 'Arrived' : '—')}</div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill ${isCompleted ? 'completed' : ''}" style="width:${pct}%"></div>
+        </div>
+      </div>
+
+      ${mapsLink
+                    ? `<a class="map-btn" href="${mapsLink}" target="_blank">📍 Open Route in Google Maps</a>`
+                    : `<div class="map-btn disabled">📍 Waiting for first location update...</div>`}
+
+      <div class="update-info">
+        Last position: <span>${timeAgo(data.last_update_at)}</span>
+        ${isActive ? ' &nbsp;•&nbsp; Auto-refreshes every <span>15 seconds</span>' : ''}
+      </div>
+    `;
+        }
+
+        function closeWebSocket() {
+            if (wsReconnectTimer) {
+                clearTimeout(wsReconnectTimer);
+                wsReconnectTimer = null;
+            }
+            if (ws) {
+                ws.onclose = null; // don't trigger the auto-reconnect
+                try { ws.close(); } catch (_) { }
+                ws = null;
+            }
+        }
+
+        function showError(msg) {
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            closeWebSocket();
+            document.getElementById('liveDot').style.display = 'none';
+            const mapCard = document.querySelector('.map-card');
+            if (mapCard) mapCard.style.display = 'none';
+            document.getElementById('content').innerHTML = `
+      <div class="not-found">
+        <div class="icon">❓</div>
+        <h3>${msg}</h3>
+        <p>Ask the person sharing this trip to send a fresh link</p>
+      </div>`;
+        }
+
+        // Fetch immediately, then every 15s while the trip is active —
+        // this keeps running regardless of WebSocket state, as the
+        // guaranteed-correct fallback. The WebSocket (connected right
+        // alongside it) is what makes updates feel instant and smooth
+        // when the connection is available; polling is what guarantees
+        // correctness either way.
+        fetchTrip();
+        pollTimer = setInterval(fetchTrip, 15 * 1000);
+        connectWebSocket();
+    </script>
+
+</body>
+
+</html>
